@@ -20,6 +20,8 @@ suelo = pygame.image.load("img/suelo.png")
 # Variables del juego
 suelo_desplazamiento = 0
 desplazamiento_velocidad = 4
+volando = False
+fin_del_juego = False
 
 class Pajaro(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -33,18 +35,41 @@ class Pajaro(pygame.sprite.Sprite):
         self.image = self.imagenes[self.indice]
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
+        self.vel = 0
+        self.hizo_clic = False
 
     def update(self):
-        # Manejar la animación
-        self.contador += 1
-        calmar_vuelos = 5
+        if volando == True:
+            # Gravedad
+            self.vel += 0.5
+            if self.vel > 8:
+                self.vel = 8
+            if self.rect.bottom < 576:
+                self.rect.y += int(self.vel)
 
-        if self.contador > calmar_vuelos:
-            self.contador = 0
-            self.indice += 1
-            if self.indice >= len(self.imagenes):
-                self.indice = 0
-        self.image = self.imagenes[self.indice]
+        if fin_del_juego == False:
+            # Volar
+            if pygame.mouse.get_pressed()[0] == 1 and self.hizo_clic == False:
+                self.hizo_clic = True
+                self.vel = -10
+            if pygame.mouse.get_pressed()[0] == 0:
+                self.hizo_clic = False
+
+            # Manejar la animación
+            self.contador += 1
+            calmar_vuelo = 5
+
+            if self.contador > calmar_vuelo:
+                self.contador = 0
+                self.indice += 1
+                if self.indice >= len(self.imagenes):
+                    self.indice = 0
+            self.image = self.imagenes[self.indice]
+
+            # Rotacionar el pájaro
+            self.image = pygame.transform.rotate(self.imagenes[self.indice], self.vel * -2)
+        else:
+            self.image = pygame.transform.rotate(self.imagenes[self.indice], -90)
 
 grupo_pajaros = pygame.sprite.Group()
 
@@ -61,15 +86,25 @@ while correr:
     grupo_pajaros.draw(pantalla)
     grupo_pajaros.update()
 
-    # Dibujando y desplazando el suelo
+    # Dibuja el suelo
     pantalla.blit(suelo, (suelo_desplazamiento, 576))
-    suelo_desplazamiento -= desplazamiento_velocidad
-    if abs(suelo_desplazamiento) > 35:
-        suelo_desplazamiento = 0
+
+    # Mira si el pájaro ha tocado el suelo
+    if flappy.rect.bottom > 576:
+        fin_del_juego = True
+        volando = False
+
+    if fin_del_juego == False:
+        # Desplazando el suelo
+        suelo_desplazamiento -= desplazamiento_velocidad
+        if abs(suelo_desplazamiento) > 35:
+            suelo_desplazamiento = 0
 
     for acto in pygame.event.get():
         if acto.type == pygame.QUIT:
             correr = False
+        if acto.type == pygame.MOUSEBUTTONDOWN and volando == False and fin_del_juego == False:
+            volando = True
 
     pygame.display.update()
 
