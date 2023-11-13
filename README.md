@@ -8,7 +8,7 @@ Haz clic en el ratón para que el pajarito vuele. ¡Solo eso!
 
 ### Fin del juego?
 
-Si has perdido, haz clic en el botón de "RESTART" para volver al comienzo del juego.
+Si has perdido, haz clic en el botón _RESTART_ para volver al comienzo del juego.
 
 ## ¡Buen juego!
 
