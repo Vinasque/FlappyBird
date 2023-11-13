@@ -21,7 +21,8 @@ blanco = (255, 255, 255)
 
 # Cargando las imágenes
 fondo = pygame.image.load("img/fondo.png")
-suelo = pygame.image.load("img/suelo.png")
+suelo_img = pygame.image.load("img/suelo.png")
+boton_img = pygame.image.load("img/reintentar.png")
 
 # Variables del juego
 suelo_desplazamiento = 0
@@ -37,6 +38,13 @@ tubo_pasado = False
 def dibujar_texto(texto, fuente, texto_col, x, y):
     img = fuente.render(texto, True, texto_col)
     pantalla.blit(img, (x, y))
+
+def reinicia_juego():
+    grupo_tubos.empty()
+    pajarito.rect.x = 75
+    pajarito.rect.y = int(pantalla_altura / 2)
+    pontuacion = 0
+    return pontuacion
 
 class Pajaro(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -103,11 +111,36 @@ class Tubo(pygame.sprite.Sprite):
         if self.rect.right < 0:
             self.kill()
 
+class Boton():
+    def __init__(self, x, y, image):
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+
+    def dibujar(self):
+        accion = False
+
+        # Saca la posición del ratón
+        pos = pygame.mouse.get_pos()
+
+        # Mira si el ratón está arriba del botón
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1:
+                accion = True
+
+        # Dibuja el botón
+        pantalla.blit(self.image, (self.rect.x, self.rect.y))
+
+        return accion
+
 grupo_pajaros = pygame.sprite.Group()
 grupo_tubos = pygame.sprite.Group()
 
 pajarito = Pajaro(75, int(pantalla_altura / 2))
 grupo_pajaros.add(pajarito)
+
+# Creando el botón de reintentar
+boton = Boton(pantalla_ancho // 2 - 50, pantalla_altura // 2 - 100, boton_img)
 
 correr = True
 while correr:
@@ -120,7 +153,7 @@ while correr:
     grupo_tubos.draw(pantalla)
 
     # Dibuja el suelo
-    pantalla.blit(suelo, (suelo_desplazamiento, 576))
+    pantalla.blit(suelo_img, (suelo_desplazamiento, 576))
 
     # Pontuación
     if len(grupo_tubos) > 0:
@@ -161,6 +194,12 @@ while correr:
             suelo_desplazamiento = 0
 
         grupo_tubos.update()
+
+    # Mira si el juego ha terminado y reinicia
+    if fin_del_juego == True:
+        if boton.dibujar() == True:
+            fin_del_juego = False
+            pontuacion = reinicia_juego()
 
     for acto in pygame.event.get():
         if acto.type == pygame.QUIT:
