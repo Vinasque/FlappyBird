@@ -13,6 +13,12 @@ pantalla_altura = 702
 pantalla = pygame.display.set_mode((pantalla_ancho, pantalla_altura))
 pygame.display.set_caption("Flappy Bird")
 
+# Definindo la fuente
+fuente = pygame.font.SysFont("Bauhaus 93", 60)
+
+# Definindo colores
+blanco = (255, 255, 255)
+
 # Cargando las imágenes
 fondo = pygame.image.load("img/fondo.png")
 suelo = pygame.image.load("img/suelo.png")
@@ -25,6 +31,12 @@ fin_del_juego = False
 tubo_brecha = 150
 tubo_frecuencia = 1500
 ultimo_tubo = pygame.time.get_ticks() - tubo_frecuencia
+pontuacion = 0
+tubo_pasado = False
+
+def dibujar_texto(texto, fuente, texto_col, x, y):
+    img = fuente.render(texto, True, texto_col)
+    pantalla.blit(img, (x, y))
 
 class Pajaro(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -91,7 +103,6 @@ class Tubo(pygame.sprite.Sprite):
         if self.rect.right < 0:
             self.kill()
 
-
 grupo_pajaros = pygame.sprite.Group()
 grupo_tubos = pygame.sprite.Group()
 
@@ -110,6 +121,19 @@ while correr:
 
     # Dibuja el suelo
     pantalla.blit(suelo, (suelo_desplazamiento, 576))
+
+    # Pontuación
+    if len(grupo_tubos) > 0:
+        if grupo_pajaros.sprites()[0].rect.left > grupo_tubos.sprites()[0].rect.left\
+        and grupo_pajaros.sprites()[0].rect.right < grupo_tubos.sprites()[0].rect.right\
+        and tubo_pasado == False:
+            tubo_pasado = True
+        if tubo_pasado == True:
+            if grupo_pajaros.sprites()[0].rect.left > grupo_tubos.sprites()[0].rect.right:
+                pontuacion += 1
+                tubo_pasado = False
+
+    dibujar_texto(str(pontuacion), fuente, blanco, int(pantalla_ancho / 2), 20)
 
     # Mirando por colisión
     if pygame.sprite.groupcollide(grupo_pajaros, grupo_tubos, False, False) or pajarito.rect.top < 0:
