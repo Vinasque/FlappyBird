@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from pygame.sprite import Group
+import random
 
 pygame.init()
 
@@ -19,9 +19,12 @@ suelo = pygame.image.load("img/suelo.png")
 
 # Variables del juego
 suelo_desplazamiento = 0
-desplazamiento_velocidad = 4
+velocidad_desplazamiento = 4
 volando = False
 fin_del_juego = False
+tubo_brecha = 150
+tubo_frecuencia = 1500
+ultimo_tubo = pygame.time.get_ticks() - tubo_frecuencia
 
 class Pajaro(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -71,11 +74,29 @@ class Pajaro(pygame.sprite.Sprite):
         else:
             self.image = pygame.transform.rotate(self.imagenes[self.indice], -90)
 
+class Tubo(pygame.sprite.Sprite):
+    def __init__(self, x, y, posicion):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("img/tubo.png")
+        self.rect = self.image.get_rect()
+        # Posición 1 para el de cima, -1 para el debajo
+        if posicion == 1:
+            self.image = pygame.transform.flip(self.image, False, True)
+            self.rect.bottomleft = [x, y - int(tubo_brecha / 2)]
+        if posicion == -1:
+            self.rect.topleft = [x, y + int(tubo_brecha / 2)]
+
+    def update(self):
+        self.rect.x -= velocidad_desplazamiento
+        if self.rect.right < 0:
+            self.kill()
+
+
 grupo_pajaros = pygame.sprite.Group()
+grupo_tubos = pygame.sprite.Group()
 
-flappy = Pajaro(75, int(pantalla_ancho / 2))
-
-grupo_pajaros.add(flappy)
+pajarito = Pajaro(75, int(pantalla_altura / 2))
+grupo_pajaros.add(pajarito)
 
 correr = True
 while correr:
@@ -85,20 +106,37 @@ while correr:
     pantalla.blit(fondo, (0, 0)) # Diseño del fonde
     grupo_pajaros.draw(pantalla)
     grupo_pajaros.update()
+    grupo_tubos.draw(pantalla)
 
     # Dibuja el suelo
     pantalla.blit(suelo, (suelo_desplazamiento, 576))
 
+    # Mirando por colisión
+    if pygame.sprite.groupcollide(grupo_pajaros, grupo_tubos, False, False) or pajarito.rect.top < 0:
+        fin_del_juego = True
+
     # Mira si el pájaro ha tocado el suelo
-    if flappy.rect.bottom > 576:
+    if pajarito.rect.bottom >= 576:
         fin_del_juego = True
         volando = False
 
-    if fin_del_juego == False:
+    if fin_del_juego == False and volando == True:
+        # Generando nuevos tubos
+        tiempo_ahora = pygame.time.get_ticks()
+        tubo_altura = random.randint(-100, 100)
+        if tiempo_ahora - ultimo_tubo > tubo_frecuencia:
+            inf_tubo = Tubo(pantalla_ancho, int(pantalla_altura / 2) + tubo_altura, -1)
+            sup_tubo = Tubo(pantalla_ancho, int(pantalla_altura / 2) + tubo_altura, 1)
+            grupo_tubos.add(inf_tubo)
+            grupo_tubos.add(sup_tubo)
+            ultimo_tubo = tiempo_ahora
+
         # Desplazando el suelo
-        suelo_desplazamiento -= desplazamiento_velocidad
+        suelo_desplazamiento -= velocidad_desplazamiento
         if abs(suelo_desplazamiento) > 35:
             suelo_desplazamiento = 0
+
+        grupo_tubos.update()
 
     for acto in pygame.event.get():
         if acto.type == pygame.QUIT:
