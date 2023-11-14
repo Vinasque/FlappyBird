@@ -2,7 +2,7 @@
 
 Una versión del mundialmente conocido videojuego FlappyBird hecho con Python.
 
-## Como jugar:
+## Cómo jugar:
 
 Haz clic en el ratón para que el pajarito vuele. ¡Solo eso!
 
